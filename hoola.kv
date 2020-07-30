@@ -1,13 +1,38 @@
 #:kivy 1.11.1
 <InGame>:
-    Label:
-        text: 'Hello World'
+    Button:
+        text: 'Meld'
+        size_hint_x: 0.1
+        size_hint_y: 0.1
+        pos_hint: {'x': 0.3, 'y':0.3}
+        background_color: (0, 1, 0, 1)
+        on_release: root.verify_meld()
+    
+    Button:
+        text: 'End Turn'
+        size_hint_x: 0.1
+        size_hint_y: 0.1
+        pos_hint: {'x': 0.6, 'y':0.3}
+        background_color: (1, 0, 0, 1)
+
+
+    # Label:
+    #     text: 'Hello World'
 
     # Image:
     #     id: image
     #     source: 'card.png'
     #     size_hint_y: 0.3
-    
+
+<RotatedCards>:
+    canvas.before:
+        PushMatrix
+        Rotate: 
+            angle: root.angle
+            axis: 0, 0, 1
+            origin: root.center
+    canvas.after:
+        PopMatrix
 # <cards>:
 #     size: 30, 30
 #     Image: 
