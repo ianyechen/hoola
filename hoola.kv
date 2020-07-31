@@ -1,28 +1,25 @@
 #:kivy 1.11.1
 <InGame>:
     Button:
-        text: 'Meld'
+        text: 'Meld' if root.taking_first_card == 1 else 'Draw'
         size_hint_x: 0.1
         size_hint_y: 0.1
         pos_hint: {'x': 0.3, 'y':0.3}
         background_color: (0, 1, 0, 1)
-        on_release: root.verify_meld()
+        on_release: root.verify_meld() if root.taking_first_card == 1 else root.draw_card()
     
     Button:
-        text: 'End Turn'
+        text: 'End Turn' if root.taking_first_card == 1 else 'Thank you!'
         size_hint_x: 0.1
         size_hint_y: 0.1
         pos_hint: {'x': 0.6, 'y':0.3}
         background_color: (1, 0, 0, 1)
+        on_release: root.end_turn() if root.taking_first_card == 1 else root.thank_you()
 
-
-    # Label:
-    #     text: 'Hello World'
-
-    # Image:
-    #     id: image
-    #     source: 'card.png'
-    #     size_hint_y: 0.3
+    Image:
+        source: './cards/back.png'
+        size_hint_y: 0.2 
+        pos_hint: {'x': -0.1, 'y':0.5}
 
 <RotatedCards>:
     canvas.before:
@@ -33,7 +30,3 @@
             origin: root.center
     canvas.after:
         PopMatrix
-# <cards>:
-#     size: 30, 30
-#     Image: 
-#         source: 'd13.png'

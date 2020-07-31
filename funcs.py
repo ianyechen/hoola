@@ -50,5 +50,4 @@ def is_meld_valid(cards):
             
 def player_turn(player):
 
-    if player != 0: return
-    return 
+    return player + 1 if (player + 1 != 4) else 0
