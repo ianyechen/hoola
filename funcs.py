@@ -1,3 +1,6 @@
+# converting a card number to a card string (5 -> c5)
+# params: int card 
+# return: str card 
 def cardnum_to_cardstr(card):
 
     number = str(card % 13)
@@ -10,7 +13,24 @@ def cardnum_to_cardstr(card):
     else: suit = 's'
 
     return './cards/' + suit + number + '.png'
+
+# converting a card string to a card number (c5 -> 5)
+# params: str card 
+# return: int card 
+def cardstr_to_cardnum(card):
     
+    multiply = 0
+
+    if card[0] == 'c': multiply = 0
+    elif card[0] == 'd': multiply = 1
+    elif card[0] == 'h': multiply = 2
+    else: multiply = 3
+
+    return int((multiply * 13)) + int(card[1:])
+     
+# checking to see if a meld is valid or not 
+# params: list cards 
+# return: bool result 
 def is_meld_valid(cards):
 
     if len(cards) == 1:
@@ -48,6 +68,9 @@ def is_meld_valid(cards):
             if cards_with_num[0] == cards_with_num[1] == cards_with_num[2]: return True
             else: return False
             
-def player_turn(player):
-
-    return player + 1 if (player + 1 != 4) else 0
+# checking to see if a end turn is valid or not 
+# params: list cards 
+# return: bool result 
+def is_end_turn_valid(cards):
+    if len(cards) != 1: return False
+    else: return True

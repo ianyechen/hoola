@@ -4,22 +4,27 @@
         text: 'Meld' if root.taking_first_card == 1 else 'Draw'
         size_hint_x: 0.1
         size_hint_y: 0.1
-        pos_hint: {'x': 0.3, 'y':0.3}
+        pos_hint: {'x': 0.1, 'y':0.1}
         background_color: (0, 1, 0, 1)
-        on_release: root.verify_meld() if root.taking_first_card == 1 else root.draw_card()
+        on_release: root.verify_meld() if root.taking_first_card == 1 else root.draw_card(root.players[0])
     
     Button:
         text: 'End Turn' if root.taking_first_card == 1 else 'Thank you!'
         size_hint_x: 0.1
         size_hint_y: 0.1
-        pos_hint: {'x': 0.6, 'y':0.3}
+        pos_hint: {'x': 0.8, 'y':0.1}
         background_color: (1, 0, 0, 1)
-        on_release: root.end_turn() if root.taking_first_card == 1 else root.thank_you()
+        on_release: root.end_turn(0) if root.taking_first_card == 1 else root.thank_you()
 
     Image:
         source: './cards/back.png'
         size_hint_y: 0.2 
         pos_hint: {'x': -0.1, 'y':0.5}
+
+    Label:
+        text: str(root.number_of_cards_left)
+        pos_hint: {'x': -0.1, 'y':0.22}
+
 
 <RotatedCards>:
     canvas.before:
