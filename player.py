@@ -31,10 +31,10 @@ class Player(Widget):
 
     def player_turn(self, player_number):
         # for i in range(5000): print(i)
-
-        print(self.player_cards)
+        print('Turn number ', player_number)
+        # print(self.player_cards)
         self.parent.draw_card(self)
-        print(self.player_cards)
+        # print(self.player_cards)
         self.parent.end_turn(player_number)
-        print(self.player_cards)
-        return player_number + 1 if (player_number + 1 != 4) else 0 
+        # print(self.player_cards)
+        # return player_number + 1 if (player_number + 1 != 4) else 0 

@@ -5,7 +5,8 @@ from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty, ListProperty
+from kivy.properties import NumericProperty, ListProperty, BooleanProperty
+from kivy.clock import Clock 
 
 from rotated_cards import RotatedCards
 from touch import Touch
@@ -16,7 +17,12 @@ class InGame(FloatLayout):
 
     # indicates whether or not the first card has been taken for a turn (0 for no, 1 for yes)
     taking_first_card = NumericProperty(0)
+    # number of cards left in the entire deck 
     number_of_cards_left = NumericProperty(0)
+    # whether to hide the buttons or display
+    buttons_visible = BooleanProperty(True)
+    # whether player is deciding a thank you or not (shows the pass or thank you button)
+    deciding_thank_you = BooleanProperty(False)
     # the entire card deck left for players to draw from 
     card_deck = []
     # holds the 4 Player classes 
@@ -98,28 +104,27 @@ class InGame(FloatLayout):
             self.players[0].player_melded_cards.append('')
 
     def end_turn(self, turn_num):
+
         if turn_num != 0:
             card = self.players[turn_num].player_cards[0]
             self.players[turn_num].remove_card(card)
             self.trash_pile_card.source = cardnum_to_cardstr(card)
             self.trash_pile_card_num = card
+            self.deciding_thank_you = True
+            self.buttons_visible = True
+            self.check_for_thank_yous()
             return 
 
         if not is_end_turn_valid(self.cards_currently_selected): return 
+
         card_num = cardstr_to_cardnum(self.cards_currently_selected[0])
-        print(cardstr_to_cardnum(self.cards_currently_selected[0]))
         self.players[0].remove_card(card_num)
         self.trash_pile_card.source = cardnum_to_cardstr(card_num)
         self.trash_pile_card_num = card_num
         self.refresh_cards()
+        self.buttons_visible = False
         self.turn += 1
-
-        while self.turn != 0:
-            print(self.turn)
-            self.turn = self.players[self.turn].player_turn(self.turn)
-            self.check_for_thank_yous()
-
-
+        self.players[self.turn+1].player_turn(self.turn+1)
         self.taking_first_card = 0
 
     def draw_card(self, player):
@@ -144,7 +149,26 @@ class InGame(FloatLayout):
         self.players[0].display_card()
 
     def check_for_thank_yous(self):
-        print('checking for thank yous')
+        Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
+
+    def set_deciding_thank_you(self, dt):
+        if not self.deciding_thank_you:
+            Clock.unschedule(self.set_deciding_thank_you)  
+            self.buttons_visible = False 
+            self.turn += 1
+
+            if self.turn == 4:
+                self.turn = 0
+                print(self.turn)
+                self.buttons_visible = True
+                self.taking_first_card = 0
+                return
+
+            self.players[self.turn].player_turn(self.turn)
+
+    def pass_for_thank_you(self):
+        self.deciding_thank_you = False
+
     
 class HoolaApp(App):
     def build(self):
