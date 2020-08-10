@@ -68,6 +68,37 @@ def is_meld_valid(cards):
             if cards_with_num[0] == cards_with_num[1] == cards_with_num[2]: return True
             else: return False
             
+def is_add_valid(cards_currently_selected, melded_cards):
+
+    cards_to_be_added = list(cards_currently_selected)
+
+    for index in range(len(cards_to_be_added)):
+        cards_to_be_added[index] = cardstr_to_cardnum(cards_to_be_added[index])
+
+    add_to_same_num = False
+    add_to_consecutive_nums = False
+
+    if len(cards_to_be_added) == 1:
+        for index, combination in enumerate(melded_cards):
+            # combination.sort()
+            print(index, combination)
+            if len(combination) == 1:
+                if cards_to_be_added[0] == combination[0] + 1 or cards_to_be_added[0] == combination[0] - 1: return True, index
+                else: return False, index
+            elif len(combination) >= 2:
+                if combination[0] % 13 == combination[-1] % 13 == cards_to_be_added[0] % 13: return True, index
+                if combination[1] == combination[0] + 1:
+                    if cards_to_be_added[0] % 13 == 1 and combination[-1] % 13 == 0 and cards_to_be_added[0] == combination[-1] - 12: return True, index
+                    elif cards_to_be_added[0] % 13 == 0 and combination[0] % 13 == 1 and cards_to_be_added[0] == combination[0] + 12: return True, index
+                    elif (abs(cards_to_be_added[0] - combination[0]) == 1 or 
+                    abs(cards_to_be_added[0] - combination[-1]) == 1): return True, index
+                    else: return False, index
+                # if card % 13 != cards_to_be_added[0] % 13: add_to_same_num = False
+                # if abs(card-cards_to_be_added[0]) == 1 and 
+
+    print(cards_to_be_added, melded_cards)
+    return (add_to_same_num or add_to_consecutive_nums), 0
+
 # checking to see if a end turn is valid or not 
 # params: list cards 
 # return: bool result 

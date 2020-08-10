@@ -95,7 +95,7 @@ class Player(Widget):
 
             same_suit_cards.append(copy_of_player_cards[i])
 
-            if i + 1 < len(copy_of_player_cards) and copy_of_player_cards[i+1] < copy_of_player_cards[i]:
+            if (i + 1 < len(copy_of_player_cards) and copy_of_player_cards[i+1] < copy_of_player_cards[i]) or (i == len(copy_of_player_cards) - 1):
                 
                 print('same suit cards -> ', same_suit_cards)
                 if len(same_suit_cards) == 3:
@@ -154,4 +154,5 @@ class Player(Widget):
                 if card in self.player_cards: self.player_cards.remove(card)
 
             if player_number > 1: increment_x = 0
+            elif player_number == 1: increment_x += 1 
             increment_y += 1
