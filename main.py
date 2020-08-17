@@ -11,7 +11,7 @@ from kivy.clock import Clock
 from rotated_cards import RotatedCards
 from touch import Touch
 from player import Player
-from funcs import cardnum_to_cardstr, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
+from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
 
 class InGame(FloatLayout):
 
@@ -27,8 +27,10 @@ class InGame(FloatLayout):
     card_deck = []
     # holds the 4 Player classes 
     players = []
-    # holds the current player's widgets for displaying the cards
-    widgets = [[],[],[],[]]
+    # holds the current player's widgets for displaying the cards in hand
+    widgets_for_player_cards = [[],[],[],[]]
+    # holds the current player's widgets for displaying the cards that were melded
+    widgets_for_player_melds = [[],[],[],[]]
     # holds the cards currently selected by the player in string ('h13')
     cards_currently_selected = []
     # holds which turn it is (0-3)
@@ -40,19 +42,22 @@ class InGame(FloatLayout):
         self.players = [Player() for i in range(4)]
       
         # initial distribution of cards at the beginning of game 
-
         count = 0
         for player in self.players:
             self.add_widget(player)
 
-            if count == 0:
-                player.player_cards = [4,5,6,8,9,13,22]
-                count+=1
-                continue
-            if count == 1:
-                player.player_cards = [10,11,12,33,34,35,42]
-                count+=1
-                continue
+            # if count == 0:
+            #     player.player_cards = [34,35]
+            #     for card in player.player_cards:
+            #         self.card_deck.remove(card)
+            #     count+=1
+            #     continue
+            # if count == 1:
+            #     player.player_cards = [1,14,27, 3,4,5,7]
+            #     for card in player.player_cards:
+            #         self.card_deck.remove(card)
+            #     count+=1
+            #     continue
 
             for i in range(7):
                 card = random.choice(self.card_deck)
@@ -67,29 +72,25 @@ class InGame(FloatLayout):
         self.start_game()
 
     def display_cards(self):
-
-        self.players[1].display_card(1)
-        self.players[2].display_card(2)
-        self.players[3].display_card(3)
+        for i in range(4):
+            self.players[i].display_card(i)
 
         self.trash_pile_card = Image(source='./cards/back.png', size_hint_y=0.2, pos_hint={'x': 0.1, 'y':0.5})
         self.add_widget(self.trash_pile_card)
 
-        self.players[0].display_card(0)
-
     def start_game(self):
         card = random.choice(self.card_deck)
-        self.trash_pile_card.source = cardnum_to_cardstr(card)
+        self.card_deck.remove(card)
+        self.trash_pile_card.source = cardnum_to_card_image_path(card)
         self.trash_pile_card_num = card
         self.turn = 0
         self.game_over = False
     
     def verify_meld(self):
         if is_meld_valid(self.cards_currently_selected):
-           # print('Meld is succesful')
-
+            print('Meld is succesful')
             increment = len(self.players[0].player_melded_cards)
-            print('Melded cards -> ', self.players[0].player_melded_cards)
+            # print('Melded cards -> ', self.players[0].player_melded_cards)
             # print(self.players[0].player_melded_cards)
 
             for card in self.cards_currently_selected:             
@@ -107,13 +108,17 @@ class InGame(FloatLayout):
             self.players[0].player_melded_cards.append('')
 
         else:
+            # needs to have melded before adding to other combinations 
+            if len(self.players[0].player_melded_cards) == 0: 
+                print('Add failed. Has to meld own cards first before adding')
+                return
+
             check_meld_turn = 1
             while check_meld_turn < 4:
-                print('check_meld_turn ->', check_meld_turn)
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
                 if (valid): 
                     print('Add successful!', check_meld_turn, melded_cards_index)
-                    print(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards)
+                    # print(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards)
                     for card in self.cards_currently_selected:             
                         card_num = cardstr_to_cardnum(card)
                         self.players[0].remove_card(card_num)
@@ -122,16 +127,17 @@ class InGame(FloatLayout):
 
                     self.cards_currently_selected.clear()
                     self.players[check_meld_turn].display_melded_cards(check_meld_turn)
+                    self.update_melds(check_meld_turn)
                     break
-                check_meld_turn += 1
-           
 
+                check_meld_turn += 1
+            
     def end_turn(self, turn_num):
 
         if turn_num != 0:
             card = self.players[turn_num].player_cards[0]
             self.players[turn_num].remove_card(card)
-            self.trash_pile_card.source = cardnum_to_cardstr(card)
+            self.trash_pile_card.source = cardnum_to_card_image_path(card)
             self.trash_pile_card_num = card
             self.check_for_game_over(turn_num)
             self.deciding_thank_you = True
@@ -143,7 +149,7 @@ class InGame(FloatLayout):
 
         card_num = cardstr_to_cardnum(self.cards_currently_selected[0])
         self.players[0].remove_card(card_num)
-        self.trash_pile_card.source = cardnum_to_cardstr(card_num)
+        self.trash_pile_card.source = cardnum_to_card_image_path(card_num)
         self.trash_pile_card_num = card_num
         self.check_for_game_over(turn_num)
         self.refresh_cards(0)
@@ -162,10 +168,18 @@ class InGame(FloatLayout):
         self.refresh_cards(0)
 
     def refresh_cards(self, player_number):
-        for widget in self.widgets[player_number]:
+        for widget in self.widgets_for_player_cards[player_number]:
             self.remove_widget(widget)
-        
+
+        self.widgets_for_player_cards[player_number].clear()        
         self.players[player_number].display_card(player_number)
+
+    def update_melds(self, player_number):
+        for widget in self.widgets_for_player_melds[player_number]:
+            self.remove_widget(widget)
+
+        self.widgets_for_player_melds[player_number].clear()        
+        self.players[player_number].display_melded_cards(player_number)
 
     def check_for_thank_yous(self):
         Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
