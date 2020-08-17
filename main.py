@@ -1,5 +1,5 @@
-import random 
 import kivy
+import random 
 
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
@@ -47,7 +47,7 @@ class InGame(FloatLayout):
             self.add_widget(player)
 
             # if count == 0:
-            #     player.player_cards = [34,35]
+            #     player.player_cards = [1,2,3,4,11,12,13]
             #     for card in player.player_cards:
             #         self.card_deck.remove(card)
             #     count+=1
@@ -80,9 +80,9 @@ class InGame(FloatLayout):
 
     def start_game(self):
         card = random.choice(self.card_deck)
-        self.card_deck.remove(card)
         self.trash_pile_card.source = cardnum_to_card_image_path(card)
         self.trash_pile_card_num = card
+        self.card_deck.remove(card)
         self.turn = 0
         self.game_over = False
     
@@ -90,9 +90,8 @@ class InGame(FloatLayout):
         if is_meld_valid(self.cards_currently_selected):
             print('Meld is succesful')
             increment = len(self.players[0].player_melded_cards)
-            # print('Melded cards -> ', self.players[0].player_melded_cards)
-            # print(self.players[0].player_melded_cards)
-
+         
+            # displaying melded cards for player 0
             for card in self.cards_currently_selected:             
                 if card == '': continue
                 img_src = './cards/' + card + '.png'
@@ -116,9 +115,9 @@ class InGame(FloatLayout):
             check_meld_turn = 1
             while check_meld_turn < 4:
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
+                
                 if (valid): 
                     print('Add successful!', check_meld_turn, melded_cards_index)
-                    # print(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards)
                     for card in self.cards_currently_selected:             
                         card_num = cardstr_to_cardnum(card)
                         self.players[0].remove_card(card_num)
@@ -190,7 +189,6 @@ class InGame(FloatLayout):
 
     def thank_you(self):
         self.took_first_card = True
-        # self.refresh_cards(self.turn)
         self.turn = 0
         self.cards_currently_selected.clear()
         self.players[0].add_card(self.trash_pile_card_num)
@@ -202,12 +200,10 @@ class InGame(FloatLayout):
     def pass_for_thank_you(self):
         self.deciding_thank_you = False
         self.buttons_visible = False 
-        # self.refresh_cards(self.turn)
         self.turn += 1
 
         if self.turn == 4:
             self.turn = 0
-            # print(self.turn)
             self.buttons_visible = True
             self.took_first_card = False
             return

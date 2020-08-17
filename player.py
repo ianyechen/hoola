@@ -33,7 +33,6 @@ class Player(Widget):
                 wid = Image(source=img_src, size_hint_y=0.2, pos_hint={'x':increment*0.05, 'y': 0})
                 self.parent.add_widget(wid)
                 self.parent.widgets_for_player_cards[0].append(wid)
-
                 increment += 1     
 
         elif player_number == 1:
@@ -60,15 +59,11 @@ class Player(Widget):
     def player_turn(self, player_number):
         
         print('Turn number ', player_number)
-        # print(self.player_cards)
         self.parent.draw_card(self)
         if (player_number != 0):
             self.decide_can_meld(player_number)
-        # print(self.player_cards)
         self.parent.end_turn(player_number)
         self.parent.refresh_cards(player_number)
-        # print(self.player_cards)
-        # return player_number + 1 if (player_number + 1 != 4) else 0 
 
     def decide_can_meld(self, player_number):
 
@@ -77,45 +72,39 @@ class Player(Widget):
 
         # key is the number of card (1-13), value is the index where the number is at
         num_to_index = {}
-        # combinations_that_can_be_melded = []
         copy_of_player_cards = list(self.player_cards)
 
         # converting the entire list of player cards into the numbers by % 13 (27 -> 1)
         for i in range(len(copy_of_player_cards)):
             copy_of_player_cards[i] = cardnum_to_cardstr(copy_of_player_cards[i])
-            # if copy_of_player_cards[i] == 0: copy_of_player_cards[i] = 13
             if num_to_index.get(copy_of_player_cards[i][1:]) == None:
                 num_to_index[copy_of_player_cards[i][1:]] = []
             num_to_index[copy_of_player_cards[i][1:]].append(i)
 
-        print('Player cards ->', copy_of_player_cards)
-        print('num_to_index ->', num_to_index)
-
         same_suit_cards = []
-        
         melded_consecutive_cards = False
 
         for i in range(len(copy_of_player_cards)):
 
             same_suit_cards.append(copy_of_player_cards[i])
-            print(same_suit_cards)
+
             # if next card is of different suit or this is the last iteration of the loop (checking last card)
             if (i + 1 < len(copy_of_player_cards) and copy_of_player_cards[i+1][0] != copy_of_player_cards[i][0]) or (i == len(copy_of_player_cards) - 1):
                 
-                print('same suit cards -> ', same_suit_cards)
                 if len(same_suit_cards) >= 3:
                     
                     suit_str = same_suit_cards[0][0]
 
                     for i in range(len(same_suit_cards)):
                         same_suit_cards[i] = int(same_suit_cards[i][1:])
-
                     
+                    # using a left and right system to check every single index 
                     consecutive_cards = set()
                     loop = False
                     left = 0 
                     right = len(same_suit_cards) - 1
 
+                    # if 1, 2, 13 in list
                     if 13 in same_suit_cards and 1 in same_suit_cards and 2 in same_suit_cards:
                         consecutive_cards.update([1, 2, 13])
                         loop = True
@@ -129,6 +118,7 @@ class Player(Widget):
                             consecutive_cards.add(same_suit_cards[right])
                             right -= 1 
                         
+                    # if 1, 12, 13 in list
                     elif 12 in same_suit_cards and 13 in same_suit_cards and 1 in same_suit_cards:
                         consecutive_cards.update([1, 12, 13])
                         loop = True
@@ -151,6 +141,7 @@ class Player(Widget):
                         consecutive_cards.clear()
                         melded_consecutive_cards = True
                         
+                    # checking to see if there are any other combinations, or if there wasn't a loop
                     while (left <= right):
                         if left != right and (same_suit_cards[left+1] == same_suit_cards[left] + 1): 
                             consecutive_cards.add(same_suit_cards[left])
@@ -158,8 +149,6 @@ class Player(Widget):
                         else:
                             if len(consecutive_cards) >= 3: 
                                 list_to_add = list(consecutive_cards)
-                                print(list_to_add)
-                                print(self.player_cards)
                                 for card in list_to_add:
                                     num = cardstr_to_cardnum(suit_str+str(card))
                                     self.player_cards.remove(num)                                
@@ -171,6 +160,7 @@ class Player(Widget):
     
                 same_suit_cards = []
 
+        # needs to refresh num_to_index if some cards have been melded already 
         if melded_consecutive_cards:
             copy_of_player_cards = list(self.player_cards)
             num_to_index.clear()
@@ -181,16 +171,15 @@ class Player(Widget):
                 num_to_index[copy_of_player_cards[i][1:]].append(i)
 
         melded_sevens_alone = False
+
         # getting all the 7's 
         if num_to_index.get('7') != None:
             melded_sevens_alone = True
-            print('slkdjskdjf')
             for i in range(len(num_to_index['7'])):
                 num_to_index['7'][i] = self.player_cards[num_to_index['7'][i]]
                 meld_combo_with_single_seven = [num_to_index['7'][i]]
                 self.player_melded_cards.append(meld_combo_with_single_seven)
                 self.player_cards.remove(num_to_index['7'][i])
-                # print(self.player_melded_cards)
 
         if melded_sevens_alone:
             copy_of_player_cards = list(self.player_cards)
@@ -201,8 +190,6 @@ class Player(Widget):
                     num_to_index[copy_of_player_cards[i][1:]] = []
                 num_to_index[copy_of_player_cards[i][1:]].append(i)
 
-        print('Player cards ->', copy_of_player_cards)
-        print('num_to_index ->', num_to_index)
         # getting the combinations of 3 of the same card 
         for key, value in num_to_index.items():
             if key == 7: continue
@@ -215,9 +202,7 @@ class Player(Widget):
                     self.player_cards.remove(value[i])
 
         if self.player_melded_cards: self.display_melded_cards(player_number)
-        print('Melded cards -> ', self.player_melded_cards)
-        print('Player cards -> ', self.player_cards)
-
+      
     def display_melded_cards(self, player_number):
 
         increment_x = 0
@@ -244,7 +229,6 @@ class Player(Widget):
                 self.parent.widgets_for_player_melds[player_number].append(wid)
                 if player_number == 1: increment_x += 2 # spacing between the combinations 
                 else: increment_x += 1
-                # if card in self.player_cards: self.player_cards.remove(card)
 
             if player_number > 1: increment_x = 0
             elif player_number == 1: increment_x += 1 
