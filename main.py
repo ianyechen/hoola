@@ -46,18 +46,18 @@ class InGame(FloatLayout):
         for player in self.players:
             self.add_widget(player)
 
-            if count == 0:
-                player.player_cards = [6]
-                for card in player.player_cards:
-                    self.card_deck.remove(card)
-                count+=1
-                continue
-            if count == 1:
-                player.player_cards = [27,3,4,5,7]
-                for card in player.player_cards:
-                    self.card_deck.remove(card)
-                count+=1
-                continue
+            # if count == 0:
+            #     player.player_cards = [6]
+            #     for card in player.player_cards:
+            #         self.card_deck.remove(card)
+            #     count+=1
+            #     continue
+            # if count == 1:
+            #     player.player_cards = [1, 4, 14, 20, 23, 33, 35, 51]
+            #     for card in player.player_cards:
+            #         self.card_deck.remove(card)
+            #     count+=1
+            #     continue
 
             for i in range(7):
                 card = random.choice(self.card_deck)
@@ -137,7 +137,10 @@ class InGame(FloatLayout):
             self.check_for_game_over(turn_num)
             self.deciding_thank_you = True
             self.buttons_visible = True
-            self.check_for_thank_yous()
+            count = 1
+            while count != 4:
+                self.check_for_thank_yous((turn_num + count) % 4)
+                count +=  1
             return 
 
         if not is_end_turn_valid(self.cards_currently_selected): return 
@@ -150,6 +153,10 @@ class InGame(FloatLayout):
         self.refresh_cards(0)
         self.buttons_visible = False
         self.took_first_card = False
+        # count = 1
+        # while count != 4:
+        #     self.check_for_thank_yous((turn_num + count) % 4)
+        #     count +=  1 
         self.turn += 1
         self.players[self.turn].player_turn(self.turn)
 
@@ -176,8 +183,9 @@ class InGame(FloatLayout):
         self.widgets_for_player_melds[player_number].clear()        
         self.players[player_number].display_melded_cards(player_number)
 
-    def check_for_thank_yous(self):
-        Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
+    def check_for_thank_yous(self, turn_num):
+        if turn_num == 0: Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
+        else: self.players[turn_num].check_for_thank_yous(turn_num)
 
     def set_deciding_thank_you(self, dt):
         if not self.deciding_thank_you:

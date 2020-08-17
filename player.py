@@ -61,18 +61,19 @@ class Player(Widget):
         print('Turn number ', player_number)
         self.parent.draw_card(self)
         if (player_number != 0):
-            self.decide_can_meld(player_number)
+            self.decide_can_meld(player_number, False)
         self.parent.end_turn(player_number)
         self.parent.refresh_cards(player_number)
 
-    def decide_can_meld(self, player_number):
+    def decide_can_meld(self, player_number, saying_thank_you):
 
-        print('Melding for player, ', player_number)
+        if not saying_thank_you: print('Melding for player, ', player_number)
         self.player_cards.sort()
 
         # key is the number of card (1-13), value is the index where the number is at
         num_to_index = {}
         copy_of_player_cards = list(self.player_cards)
+        print('copy_of_player_cards -> ', copy_of_player_cards)
 
         # converting the entire list of player cards into the numbers by % 13 (27 -> 1)
         for i in range(len(copy_of_player_cards)):
@@ -134,9 +135,17 @@ class Player(Widget):
 
                     if loop:
                         list_to_add = list(consecutive_cards)
-                        for card in list_to_add:
+                        if saying_thank_you:
+                            for count, card in enumerate(list_to_add):
+                                num = cardstr_to_cardnum(suit_str+str(card))
+                                if num == self.parent.trash_pile_card_num: return True
+
+                            return False  
+                            
+                        for count, card in enumerate(list_to_add):
                             num = cardstr_to_cardnum(suit_str+str(card))
-                            self.player_cards.remove(num)
+                            list_to_add[count] = num
+                            self.player_cards.remove(num)        
                         list_to_add.sort()
                         self.player_melded_cards.append(list_to_add)
                         consecutive_cards.clear()
@@ -150,8 +159,15 @@ class Player(Widget):
                         else:
                             if len(consecutive_cards) >= 3: 
                                 list_to_add = list(consecutive_cards)
-                                for card in list_to_add:
+                                if saying_thank_you:
+                                    for count, card in enumerate(list_to_add):
+                                        num = cardstr_to_cardnum(suit_str+str(card))
+                                        if num == self.parent.trash_pile_card_num: return True
+
+                                    return False
+                                for count, card in enumerate(list_to_add):
                                     num = cardstr_to_cardnum(suit_str+str(card))
+                                    list_to_add[count] = num
                                     self.player_cards.remove(num)         
                                 list_to_add.sort()
                                 self.player_melded_cards.append(list_to_add)
@@ -173,15 +189,20 @@ class Player(Widget):
                 num_to_index[copy_of_player_cards[i][1:]].append(i)
 
         melded_sevens_alone = False
+
         print('num_to_index -> ', num_to_index)
+
         # getting all the 7's 
-        if num_to_index.get('7') != None:
+        if num_to_index.get('7') != None and not saying_thank_you:
             melded_sevens_alone = True
             for i in range(len(num_to_index['7'])):
                 num_to_index['7'][i] = self.player_cards[num_to_index['7'][i]]
                 meld_combo_with_single_seven = [num_to_index['7'][i]]
                 self.player_melded_cards.append(meld_combo_with_single_seven)
+
+            for i in range(len(num_to_index['7'])):
                 self.player_cards.remove(num_to_index['7'][i])
+
 
         if melded_sevens_alone:
             copy_of_player_cards = list(self.player_cards)
@@ -196,6 +217,12 @@ class Player(Widget):
         for key, value in num_to_index.items():
             if key == 7: continue
             if len(value) >= 3:
+                if saying_thank_you:
+                    for i in range(len(value)):
+                        value[i] = self.player_cards[value[i]]
+                        if value[i] == self.parent.trash_pile_card_num: return True
+
+                    return False  
                 for i in range(len(value)):
                     value[i] = self.player_cards[value[i]]
                 
@@ -211,8 +238,10 @@ class Player(Widget):
         increment_y = 0
         pos_hint = {}
 
-        for combination in self.player_melded_cards:        
+        for combination in self.player_melded_cards:
+
             print('Player melded cards -> ', combination)
+
             for card in combination:
 
                 img_src = cardnum_to_card_image_path(card)     
@@ -232,10 +261,19 @@ class Player(Widget):
                 wid = Image(source=img_src, size_hint_y=0.15, pos_hint=pos_hint)
                 self.parent.add_widget(wid)
                 self.parent.widgets_for_player_melds[player_number].append(wid)
-                # if player_number <= 1: increment_x += 2 # spacing between the combinations 
-                # else: increment_x += 1
                 increment_x += 1
 
             if player_number > 1: increment_x = 0
             else: increment_x += 2 
             increment_y += 1
+
+    def check_for_thank_yous(self, turn_num):
+        print('Checking thank you for turn ', turn_num)
+        self.add_card(self.parent.trash_pile_card_num)
+        if self.decide_can_meld(turn_num, True):
+            self.parent.turn = turn_num
+            print('CPU', turn_num , 'can say thank you to', self.parent.trash_pile_card_num)
+            self.decide_can_meld(turn_num, False)
+            self.parent.end_turn(turn_num)
+            self.parent.refresh_cards(turn_num)
+        else: self.remove_card(self.parent.trash_pile_card_num)
