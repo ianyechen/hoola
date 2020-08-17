@@ -137,6 +137,7 @@ class Player(Widget):
                         for card in list_to_add:
                             num = cardstr_to_cardnum(suit_str+str(card))
                             self.player_cards.remove(num)
+                        list_to_add.sort()
                         self.player_melded_cards.append(list_to_add)
                         consecutive_cards.clear()
                         melded_consecutive_cards = True
@@ -151,7 +152,8 @@ class Player(Widget):
                                 list_to_add = list(consecutive_cards)
                                 for card in list_to_add:
                                     num = cardstr_to_cardnum(suit_str+str(card))
-                                    self.player_cards.remove(num)                                
+                                    self.player_cards.remove(num)         
+                                list_to_add.sort()
                                 self.player_melded_cards.append(list_to_add)
                                 melded_consecutive_cards = True
                             consecutive_cards.clear()
@@ -171,7 +173,7 @@ class Player(Widget):
                 num_to_index[copy_of_player_cards[i][1:]].append(i)
 
         melded_sevens_alone = False
-
+        print('num_to_index -> ', num_to_index)
         # getting all the 7's 
         if num_to_index.get('7') != None:
             melded_sevens_alone = True
@@ -210,12 +212,15 @@ class Player(Widget):
         pos_hint = {}
 
         for combination in self.player_melded_cards:        
-
+            print('Player melded cards -> ', combination)
             for card in combination:
 
                 img_src = cardnum_to_card_image_path(card)     
 
-                if player_number == 1:
+                if player_number == 0:
+                    pos_hint = {'x':-0.2 + increment_x*0.03, 'y': 0.25}
+                
+                elif player_number == 1:
                     pos_hint = {'x':-0.2 + increment_x*0.03, 'y': 0.75}
 
                 elif player_number == 2: 
@@ -227,9 +232,10 @@ class Player(Widget):
                 wid = Image(source=img_src, size_hint_y=0.15, pos_hint=pos_hint)
                 self.parent.add_widget(wid)
                 self.parent.widgets_for_player_melds[player_number].append(wid)
-                if player_number == 1: increment_x += 2 # spacing between the combinations 
-                else: increment_x += 1
+                # if player_number <= 1: increment_x += 2 # spacing between the combinations 
+                # else: increment_x += 1
+                increment_x += 1
 
             if player_number > 1: increment_x = 0
-            elif player_number == 1: increment_x += 1 
+            else: increment_x += 2 
             increment_y += 1

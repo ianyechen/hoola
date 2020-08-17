@@ -46,18 +46,18 @@ class InGame(FloatLayout):
         for player in self.players:
             self.add_widget(player)
 
-            # if count == 0:
-            #     player.player_cards = [1,2,3,4,11,12,13]
-            #     for card in player.player_cards:
-            #         self.card_deck.remove(card)
-            #     count+=1
-            #     continue
-            # if count == 1:
-            #     player.player_cards = [1,14,27, 3,4,5,7]
-            #     for card in player.player_cards:
-            #         self.card_deck.remove(card)
-            #     count+=1
-            #     continue
+            if count == 0:
+                player.player_cards = [6]
+                for card in player.player_cards:
+                    self.card_deck.remove(card)
+                count+=1
+                continue
+            if count == 1:
+                player.player_cards = [27,3,4,5,7]
+                for card in player.player_cards:
+                    self.card_deck.remove(card)
+                count+=1
+                continue
 
             for i in range(7):
                 card = random.choice(self.card_deck)
@@ -89,22 +89,17 @@ class InGame(FloatLayout):
     def verify_meld(self):
         if is_meld_valid(self.cards_currently_selected):
             print('Meld is succesful')
-            increment = len(self.players[0].player_melded_cards)
-         
-            # displaying melded cards for player 0
-            for card in self.cards_currently_selected:             
-                if card == '': continue
-                img_src = './cards/' + card + '.png'
-                self.add_widget(Image(source=img_src, size_hint_y=0.15, pos_hint={'x':-0.3 + increment*0.05, 'y': 0.25}))
+            
+            for count, card in enumerate(self.cards_currently_selected):
+                self.cards_currently_selected[count] = cardstr_to_cardnum(self.cards_currently_selected[count])
+                self.players[0].remove_card(self.cards_currently_selected[count])
 
-                card_num = cardstr_to_cardnum(card)
-                self.players[0].remove_card(card_num)
-                self.players[0].player_melded_cards.append(card)
-                self.refresh_cards(0)
-                increment += 1
-
+            copy_cards_currently_selected = list(self.cards_currently_selected)
+            copy_cards_currently_selected.sort()
+            self.players[0].player_melded_cards.append(copy_cards_currently_selected)
+            self.players[0].display_melded_cards(0)
             self.cards_currently_selected.clear()
-            self.players[0].player_melded_cards.append('')
+            self.refresh_cards(0)
 
         else:
             # needs to have melded before adding to other combinations 
@@ -112,7 +107,7 @@ class InGame(FloatLayout):
                 print('Add failed. Has to meld own cards first before adding')
                 return
 
-            check_meld_turn = 1
+            check_meld_turn = 0
             while check_meld_turn < 4:
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
                 
@@ -122,6 +117,7 @@ class InGame(FloatLayout):
                         card_num = cardstr_to_cardnum(card)
                         self.players[0].remove_card(card_num)
                         self.players[check_meld_turn].player_melded_cards[melded_cards_index].append(card_num)
+                        self.players[check_meld_turn].player_melded_cards[melded_cards_index].sort()
                         self.refresh_cards(0)
 
                     self.cards_currently_selected.clear()

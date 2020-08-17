@@ -99,6 +99,7 @@ def is_add_valid(cards_currently_selected, melded_cards):
     if len(cards_to_be_added) == 1:
 
         for index, combination in enumerate(melded_cards):
+            print(combination)
             # if adding to a 7 
             if len(combination) == 1:
                 if cards_to_be_added[0] == combination[0] + 1 or cards_to_be_added[0] == combination[0] - 1: return True, index
@@ -108,6 +109,8 @@ def is_add_valid(cards_currently_selected, melded_cards):
                 if combination[1] == combination[0] + 1:
                     if cards_to_be_added[0] % 13 == 1 and combination[-1] % 13 == 0 and cards_to_be_added[0] == combination[-1] - 12: return True, index
                     elif cards_to_be_added[0] % 13 == 0 and combination[0] % 13 == 1 and cards_to_be_added[0] == combination[0] + 12: return True, index
+                    # print(abs(cards_to_be_added[0] - combination[0]))
+                    # print(cards_to_be_added[0] - combination[-1])
                     elif (abs(cards_to_be_added[0] - combination[0]) == 1 or 
                     abs(cards_to_be_added[0] - combination[-1]) == 1): return True, index
              
