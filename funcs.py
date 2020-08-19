@@ -92,7 +92,7 @@ def is_meld_valid(cards):
 def is_add_valid(cards_currently_selected, melded_cards):
 
     cards_to_be_added = list(cards_currently_selected)
-
+    
     for index in range(len(cards_to_be_added)):
         cards_to_be_added[index] = cardstr_to_cardnum(cards_to_be_added[index])
         
