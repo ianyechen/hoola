@@ -58,7 +58,7 @@ class Player(Widget):
 
     def player_turn(self, player_number):
         
-        print('Turn number ', player_number)
+        print('-------------------------------------------', 'Starting Turn number', player_number, '-------------------------------------------')
         self.parent.draw_card(self)
         if (player_number != 0):
             self.decide_can_meld(player_number, False)
@@ -73,7 +73,7 @@ class Player(Widget):
         # key is the number of card (1-13), value is the index where the number is at
         num_to_index = {}
         copy_of_player_cards = list(self.player_cards)
-        print('copy_of_player_cards -> ', copy_of_player_cards)
+        if not saying_thank_you: print('Player Cards -> ', copy_of_player_cards)
 
         # converting the entire list of player cards into the numbers by % 13 (27 -> 1)
         for i in range(len(copy_of_player_cards)):
@@ -190,7 +190,7 @@ class Player(Widget):
 
         melded_sevens_alone = False
 
-        print('num_to_index -> ', num_to_index)
+        # print('num_to_index -> ', num_to_index)
 
         # getting all the 7's 
         if num_to_index.get('7') != None and not saying_thank_you:
@@ -268,7 +268,7 @@ class Player(Widget):
             increment_y += 1
 
     def check_for_thank_yous(self, turn_num):
-        print('Checking thank you for turn ', turn_num)
+        print('Checking thank you for turn', turn_num)
         self.add_card(self.parent.trash_pile_card_num)
         if self.decide_can_meld(turn_num, True):
             self.parent.turn = turn_num
@@ -276,4 +276,8 @@ class Player(Widget):
             self.decide_can_meld(turn_num, False)
             self.parent.end_turn(turn_num)
             self.parent.refresh_cards(turn_num)
-        else: self.remove_card(self.parent.trash_pile_card_num)
+            return True
+        else: 
+            self.remove_card(self.parent.trash_pile_card_num)
+            return False
+            

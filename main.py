@@ -13,6 +13,8 @@ from touch import Touch
 from player import Player
 from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
 
+from functools import partial
+
 class InGame(FloatLayout):
 
     # indicates whether or not the first card has been taken for a turn 
@@ -35,6 +37,8 @@ class InGame(FloatLayout):
     cards_currently_selected = []
     # holds which turn it is (0-3)
     turn = NumericProperty(0)
+
+    event_for_clock_scheduling = None
 
     def __init__(self, **kwargs):
         super(InGame, self).__init__(**kwargs)
@@ -84,11 +88,14 @@ class InGame(FloatLayout):
         self.trash_pile_card_num = card
         self.card_deck.remove(card)
         self.turn = 0
+        self.check_for_thank_yous_count = 1
         self.game_over = False
+        print('-------------------------------------------', 'Starting Turn number', '0', '-------------------------------------------')
+
     
     def verify_meld(self):
         if is_meld_valid(self.cards_currently_selected):
-            print('Meld is succesful')
+            print('Meld is succesful with', self.cards_currently_selected)
             
             for count, card in enumerate(self.cards_currently_selected):
                 self.cards_currently_selected[count] = cardstr_to_cardnum(self.cards_currently_selected[count])
@@ -137,10 +144,12 @@ class InGame(FloatLayout):
             self.check_for_game_over(turn_num)
             self.deciding_thank_you = True
             self.buttons_visible = True
-            count = 1
-            while count != 4:
-                self.check_for_thank_yous((turn_num + count) % 4)
-                count +=  1
+            print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
+            self.check_for_thank_yous_count = 1
+            self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
+            # while self.check_for_thank_yous_count != 4:
+            #     self.check_for_thank_yous((turn_num + self.check_for_thank_yous_count) % 4)
+            #     if (turn_num + self.check_for_thank_yous_count) % 4 != 0: self.check_for_thank_yous_count +=  1
             return 
 
         if not is_end_turn_valid(self.cards_currently_selected): return 
@@ -153,12 +162,16 @@ class InGame(FloatLayout):
         self.refresh_cards(0)
         self.buttons_visible = False
         self.took_first_card = False
+        print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
+        self.check_for_thank_yous_count = 1
+        self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
+
         # count = 1
         # while count != 4:
         #     self.check_for_thank_yous((turn_num + count) % 4)
         #     count +=  1 
-        self.turn += 1
-        self.players[self.turn].player_turn(self.turn)
+        # self.turn += 1
+        # self.players[self.turn].player_turn(self.turn)
 
     def draw_card(self, player):
         self.took_first_card = True
@@ -183,13 +196,51 @@ class InGame(FloatLayout):
         self.widgets_for_player_melds[player_number].clear()        
         self.players[player_number].display_melded_cards(player_number)
 
-    def check_for_thank_yous(self, turn_num):
-        if turn_num == 0: Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
-        else: self.players[turn_num].check_for_thank_yous(turn_num)
+    def check_for_thank_yous(self, thank_you_turn_num, actual_turn_num, *largs):
+        # Clock.unschedule(self.check_for_thank_yous)
+        self.event_for_clock_scheduling.cancel()
 
-    def set_deciding_thank_you(self, dt):
+        # print('actual_turn_num ->', actual_turn_num, 'thank_you_turn_num ->', thank_you_turn_num, 'self.check_for_thank_yous_count ->', self.check_for_thank_yous_count )
+        if thank_you_turn_num != 0:
+            # print('CHECK', self.check_for_thank_yous_count, actual_turn_num)
+            if self.players[thank_you_turn_num].check_for_thank_yous(thank_you_turn_num): return 
+            self.check_for_thank_yous_count +=  1
+            if self.check_for_thank_yous_count != 4: self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (actual_turn_num + self.check_for_thank_yous_count) % 4, actual_turn_num), 0.1) 
+            else:
+                self.turn += 1
+                if self.turn == 4:
+                    self.turn = 0
+                    self.buttons_visible = True
+                    self.took_first_card = False
+                    return
+
+                self.players[self.turn].player_turn(self.turn)
+        else:
+            print('Checking thank you for turn 0')
+            print('Player Cards -> ', self.players[0].player_cards)
+
+            self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.set_deciding_thank_you, thank_you_turn_num, actual_turn_num), 0.1)
+        # if turn_num == 0: Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
+        # else: self.players[turn_num].check_for_thank_yous(turn_num)
+
+    def set_deciding_thank_you(self, thank_you_turn_num, actual_turn_num, *largs):
+        # print('waiting', self.deciding_thank_you)
         if not self.deciding_thank_you:
-            Clock.unschedule(self.set_deciding_thank_you)  
+            # Clock.unschedule(self.set_deciding_thank_you)  
+            self.event_for_clock_scheduling.cancel()
+            self.check_for_thank_yous_count +=  1
+            # print('SET', self.check_for_thank_yous_count, actual_turn_num)
+            if self.check_for_thank_yous_count != 4: self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (actual_turn_num + self.check_for_thank_yous_count) % 4, actual_turn_num), 0.1) 
+            else: 
+                self.turn += 1
+                if self.turn == 4:
+                    self.turn = 0
+                    self.buttons_visible = True
+                    self.took_first_card = False
+                    return
+
+                self.players[self.turn].player_turn(self.turn)
+
 
     def thank_you(self):
         self.took_first_card = True
@@ -204,15 +255,15 @@ class InGame(FloatLayout):
     def pass_for_thank_you(self):
         self.deciding_thank_you = False
         self.buttons_visible = False 
-        self.turn += 1
+        # self.turn += 1
+        # print('hm')
+        # if self.turn == 4:
+        #     self.turn = 0
+        #     self.buttons_visible = True
+        #     self.took_first_card = False
+        #     return
 
-        if self.turn == 4:
-            self.turn = 0
-            self.buttons_visible = True
-            self.took_first_card = False
-            return
-
-        self.players[self.turn].player_turn(self.turn)
+        # self.players[self.turn].player_turn(self.turn)
 
     def check_for_game_over(self, turn_num):
         if len(self.players[turn_num].player_cards) == 0:
