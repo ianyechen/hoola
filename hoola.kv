@@ -1,33 +1,56 @@
 #:kivy 1.11.1
-<InGame>:
-    Button:
-        text: 'Meld' if (root.took_first_card and root.turn == 0) else 'Pass' if root.deciding_thank_you else 'Draw'
-        size_hint_x: 0.1
-        size_hint_y: 0.1
-        pos_hint: {'x': 0.1, 'y':0.1}
-        background_color: (0, 1, 0, 1)
-        opacity: 1 if root.buttons_visible else 0
-        disabled: not root.buttons_visible
-        on_release: root.verify_meld() if (root.took_first_card and root.turn == 0) else root.pass_for_thank_you() if root.deciding_thank_you else root.draw_card(root.players[0])
-    
-    Button:
-        text: 'End Turn' if (root.took_first_card and root.turn == 0) else 'Thank you!'
-        size_hint_x: 0.1
-        size_hint_y: 0.1
-        pos_hint: {'x': 0.8, 'y':0.1}
-        background_color: (1, 0, 0, 1)
-        opacity: 1 if root.buttons_visible else 0
-        disabled: not root.buttons_visible
-        on_release: root.end_turn(0) if (root.took_first_card and root.turn == 0) else root.thank_you()
+WindowManager:
+    TitleWindow:
+    GameWindow:
 
-    Image:
-        source: './cards/back.png'
-        size_hint_y: 0.2 
-        pos_hint: {'x': -0.1, 'y':0.5}
+<TitleWindow>:
+    name: 'Title Window'
+    FloatLayout:
 
-    Label:
-        text: str(root.number_of_cards_left)
-        pos_hint: {'x': -0.1, 'y':0.22}
+        Label:
+            text: 'Title Window'
+
+        Button:
+            text: 'Play now!'
+            size_hint: 0.6, 0.2
+            pos_hint: {'x':0.2}
+            on_release:
+                app.root.current = 'Game Window'
+                root.manager.transition.direction = 'left'
+
+
+<GameWindow>:
+    name: 'Game Window'
+
+    FloatLayout:
+        Button:
+            text: 'Meld' if (root.took_first_card and root.turn == 0) else 'Pass' if root.deciding_thank_you else 'Draw'
+            size_hint_x: 0.1
+            size_hint_y: 0.1
+            pos_hint: {'x': 0.1, 'y':0.1}
+            background_color: (0, 1, 0, 1)
+            opacity: 1 if root.buttons_visible else 0
+            disabled: not root.buttons_visible
+            on_release: root.verify_meld() if (root.took_first_card and root.turn == 0) else root.pass_for_thank_you() if root.deciding_thank_you else root.draw_card(root.players[0])
+        
+        Button:
+            text: 'End Turn' if (root.took_first_card and root.turn == 0) else 'Thank you!'
+            size_hint_x: 0.1
+            size_hint_y: 0.1
+            pos_hint: {'x': 0.8, 'y':0.1}
+            background_color: (1, 0, 0, 1)
+            opacity: 1 if root.buttons_visible else 0
+            disabled: not root.buttons_visible
+            on_release: root.end_turn(0) if (root.took_first_card and root.turn == 0) else root.thank_you()
+
+        Image:
+            source: './cards/back.png'
+            size_hint_y: 0.2 
+            pos_hint: {'x': -0.1, 'y':0.5}
+
+        Label:
+            text: str(root.number_of_cards_left)
+            pos_hint: {'x': -0.1, 'y':0.22}
 
 
 <RotatedCards>:
@@ -39,3 +62,14 @@
             origin: root.center
     canvas.after:
         PopMatrix
+
+<PopUpWindow>:
+    Label:
+        text: root.game_over_message
+        size_hint: 0.6, 0.2
+        pos_hint: {'x':0.2, 'top':1}
+
+    # Button:
+    #     text: 'Pop up!'
+    #     size_hint: 0.8, 0.2
+    #     pos_hint: {'x':0.1, 'y':0.1}

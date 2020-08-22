@@ -5,17 +5,35 @@ from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty, ListProperty, BooleanProperty
+from kivy.properties import NumericProperty, ListProperty, BooleanProperty, StringProperty
 from kivy.clock import Clock 
+from kivy.uix.popup import Popup
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.lang import Builder
 
 from rotated_cards import RotatedCards
 from touch import Touch
 from player import Player
 from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
-
 from functools import partial
 
-class InGame(FloatLayout):
+class WindowManager(ScreenManager):
+    pass
+
+class TitleWindow(Screen):
+    pass
+
+class PopUpWindow(FloatLayout):
+
+    game_over_message = StringProperty('')
+
+    def __init__(self, game_over_message, **kwargs):
+        super(PopUpWindow, self).__init__(**kwargs)
+        self.game_over_message = game_over_message
+        print(self.game_over_message)
+
+
+class GameWindow(Screen):
 
     # indicates whether or not the first card has been taken for a turn 
     took_first_card = BooleanProperty(False)
@@ -25,6 +43,7 @@ class InGame(FloatLayout):
     buttons_visible = BooleanProperty(True)
     # whether player is deciding a thank you or not (shows the pass or thank you button)
     deciding_thank_you = BooleanProperty(False)
+    # what the response for the thank you is (False is pass, True is Thank You)
     response_for_thank_you = BooleanProperty(False)
     # the entire card deck left for players to draw from 
     card_deck = []
@@ -38,25 +57,27 @@ class InGame(FloatLayout):
     cards_currently_selected = []
     # holds which turn it is (0-3)
     turn = NumericProperty(0)
-
+    # holds the event for all the functions ran with Clock
     event_for_clock_scheduling = None
 
     def __init__(self, **kwargs):
-        super(InGame, self).__init__(**kwargs)
+
+        super(GameWindow, self).__init__(**kwargs)
         self.card_deck = [i+1 for i in range(52)]
         self.players = [Player() for i in range(4)]
       
         # initial distribution of cards at the beginning of game 
         count = 0
+
         for player in self.players:
             self.add_widget(player)
 
-            # if count == 0:
-            #     player.player_cards = [7]
-            #     for card in player.player_cards:
-            #         self.card_deck.remove(card)
-            #     count+=1
-            #     continue
+            if count == 0:
+                player.player_cards = [7]
+                for card in player.player_cards:
+                    self.card_deck.remove(card)
+                count+=1
+                continue
             # if count == 1:
             #     player.player_cards = [5,6,8,9]
             #     for card in player.player_cards:
@@ -77,6 +98,7 @@ class InGame(FloatLayout):
         self.start_game()
 
     def display_cards(self):
+
         for i in range(4):
             self.players[i].display_card(i)
 
@@ -84,6 +106,7 @@ class InGame(FloatLayout):
         self.add_widget(self.trash_pile_card)
 
     def start_game(self):
+
         card = random.choice(self.card_deck)
         self.trash_pile_card.source = cardnum_to_card_image_path(card)
         self.trash_pile_card_num = card
@@ -93,10 +116,10 @@ class InGame(FloatLayout):
         self.game_over = False
         print('-------------------------------------------', 'Starting Turn number', '0', '-------------------------------------------')
 
-    
     def verify_meld(self):
+
         if is_meld_valid(self.cards_currently_selected):
-            print('Meld is succesful with', self.cards_currently_selected)
+            print('Player 0 melded', self.cards_currently_selected)
             
             for count, card in enumerate(self.cards_currently_selected):
                 self.cards_currently_selected[count] = cardstr_to_cardnum(self.cards_currently_selected[count])
@@ -115,12 +138,14 @@ class InGame(FloatLayout):
                 print('Add failed. Has to meld own cards first before adding')
                 return
 
+            # checking for all 4 players' melded combinations to see if there is anything to add to 
             check_meld_turn = 0
             while check_meld_turn < 4:
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
                 
                 if (valid): 
-                    print('Add successful!', check_meld_turn, melded_cards_index)
+
+                    print('Player 0 added', self.cards_currently_selected, 'to Player', check_meld_turn)
                     for card in self.cards_currently_selected:             
                         card_num = cardstr_to_cardnum(card)
                         self.players[0].remove_card(card_num)
@@ -146,11 +171,9 @@ class InGame(FloatLayout):
             print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
             self.check_for_thank_yous_count = 1
             self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
-            # while self.check_for_thank_yous_count != 4:
-            #     self.check_for_thank_yous((turn_num + self.check_for_thank_yous_count) % 4)
-            #     if (turn_num + self.check_for_thank_yous_count) % 4 != 0: self.check_for_thank_yous_count +=  1
             return 
 
+        # if the card selected to end the turn isn't one card
         if not is_end_turn_valid(self.cards_currently_selected): return 
 
         card_num = cardstr_to_cardnum(self.cards_currently_selected[0])
@@ -165,14 +188,8 @@ class InGame(FloatLayout):
         self.check_for_thank_yous_count = 1
         self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
 
-        # count = 1
-        # while count != 4:
-        #     self.check_for_thank_yous((turn_num + count) % 4)
-        #     count +=  1 
-        # self.turn += 1
-        # self.players[self.turn].player_turn(self.turn)
-
     def draw_card(self, player):
+
         self.took_first_card = True
         self.cards_currently_selected.clear()
         random_card = random.choice(self.card_deck)
@@ -182,6 +199,7 @@ class InGame(FloatLayout):
         self.refresh_cards(0)
 
     def refresh_cards(self, player_number):
+
         for widget in self.widgets_for_player_cards[player_number]:
             self.remove_widget(widget)
 
@@ -189,6 +207,7 @@ class InGame(FloatLayout):
         self.players[player_number].display_card(player_number)
 
     def update_melds(self, player_number):
+
         for widget in self.widgets_for_player_melds[player_number]:
             self.remove_widget(widget)
 
@@ -196,12 +215,10 @@ class InGame(FloatLayout):
         self.players[player_number].display_melded_cards(player_number)
 
     def check_for_thank_yous(self, thank_you_turn_num, actual_turn_num, *largs):
-        # Clock.unschedule(self.check_for_thank_yous)
+
         self.event_for_clock_scheduling.cancel()
 
-        # print('actual_turn_num ->', actual_turn_num, 'thank_you_turn_num ->', thank_you_turn_num, 'self.check_for_thank_yous_count ->', self.check_for_thank_yous_count )
         if thank_you_turn_num != 0:
-            # print('CHECK', self.check_for_thank_yous_count, actual_turn_num)
             if self.players[thank_you_turn_num].check_for_thank_yous(thank_you_turn_num): return 
             self.check_for_thank_yous_count +=  1
             if self.check_for_thank_yous_count != 4: self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (actual_turn_num + self.check_for_thank_yous_count) % 4, actual_turn_num), 0.1) 
@@ -214,25 +231,20 @@ class InGame(FloatLayout):
                     return
 
                 self.players[self.turn].player_turn(self.turn)
+
         else:
             print('Checking thank you for turn 0')
             self.deciding_thank_you = True
             self.response_for_thank_you = False
             self.buttons_visible = True
-            # print('Player Cards -> ', self.players[0].player_cards)
-
             self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.set_deciding_thank_you, thank_you_turn_num, actual_turn_num), 0.1)
-        # if turn_num == 0: Clock.schedule_interval(self.set_deciding_thank_you, 0.1)
-        # else: self.players[turn_num].check_for_thank_yous(turn_num)
 
     def set_deciding_thank_you(self, thank_you_turn_num, actual_turn_num, *largs):
-        # print('waiting', self.deciding_thank_you)
+        
         if not self.deciding_thank_you:
-            # Clock.unschedule(self.set_deciding_thank_you)  
             self.event_for_clock_scheduling.cancel()
             if self.response_for_thank_you: return
             self.check_for_thank_yous_count +=  1
-            # print('SET', self.check_for_thank_yous_count, actual_turn_num)
             if self.check_for_thank_yous_count != 4: self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (actual_turn_num + self.check_for_thank_yous_count) % 4, actual_turn_num), 0.1) 
             else: 
                 self.turn += 1
@@ -244,7 +256,6 @@ class InGame(FloatLayout):
 
                 self.players[self.turn].player_turn(self.turn)
 
-
     def thank_you(self):
 
         self.players[0].add_card(self.trash_pile_card_num)
@@ -253,38 +264,37 @@ class InGame(FloatLayout):
             self.players[0].remove_card(self.trash_pile_card_num)
             return 
 
+        print('Player 0 can say thank you to', self.trash_pile_card_num)
+
         self.response_for_thank_you = True
         self.took_first_card = True
         self.turn = 0
         self.cards_currently_selected.clear()
-        # self.players[0].add_card(self.trash_pile_card_num)
         self.refresh_cards(0)
         self.trash_pile_card.source = './cards/back.png'
         self.trash_pile_card_num = None
         self.deciding_thank_you = False
 
     def pass_for_thank_you(self):
+
         self.deciding_thank_you = False
         self.buttons_visible = False 
-        # self.turn += 1
-        # print('hm')
-        # if self.turn == 4:
-        #     self.turn = 0
-        #     self.buttons_visible = True
-        #     self.took_first_card = False
-        #     return
-
-        # self.players[self.turn].player_turn(self.turn)
-
+      
     def check_for_game_over(self, turn_num):
+
         if len(self.players[turn_num].player_cards) == 0:
             print('Game over. Player', turn_num, 'won!')
+            game_over_message = f'Game over. Player {str(turn_num)} won!'
+            pop_up = PopUpWindow(game_over_message)
+            pop_up_window = Popup(title='Game Over', content=pop_up, size_hint=(0.5,0.5))
+            pop_up_window.open()
             return True
         else: return False
 
 class HoolaApp(App):
+    
     def build(self):
-        return InGame()
+        return Builder.load_file('hoola.kv')
 
 if __name__ == '__main__':
     HoolaApp().run()
