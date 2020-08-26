@@ -86,6 +86,11 @@ def is_meld_valid(cards):
                 if i+1 == len(cards_with_num): return True
                 elif cards_with_num[i] != cards_with_num[i+1]: return False
            
+def is_same_suit(card_1, card_2):
+    suit_1 = cardnum_to_cardstr(card_1)[0]
+    suit_2 = cardnum_to_cardstr(card_2)[0]
+    return suit_1 == suit_2
+
 # checking to see if an add is valid or not 
 # params: list cards_currently_selected, list of lists, melded combinations for a player 
 # return: bool valid, int index of the melded combination to be added to  
@@ -109,8 +114,10 @@ def is_add_valid(cards_currently_selected, melded_cards):
                 if combination[1] == combination[0] + 1:
                     if cards_to_be_added[0] % 13 == 1 and combination[-1] % 13 == 0 and cards_to_be_added[0] == combination[-1] - 12: return True, index
                     elif cards_to_be_added[0] % 13 == 0 and combination[0] % 13 == 1 and cards_to_be_added[0] == combination[0] + 12: return True, index
-                    elif (abs(cards_to_be_added[0] - combination[0]) == 1 or 
-                          abs(cards_to_be_added[0] - combination[-1]) == 1): return True, index
+                    elif ((abs(cards_to_be_added[0] - combination[0]) == 1 or 
+                          abs(cards_to_be_added[0] - combination[-1]) == 1) and 
+                         (is_same_suit(cards_to_be_added[0], combination[0]) or
+                          is_same_suit(cards_to_be_added[-1], combination[0]))): return True, index
              
     # still needs to add if adding more than 1 card 
     return False, 0
@@ -121,3 +128,4 @@ def is_add_valid(cards_currently_selected, melded_cards):
 def is_end_turn_valid(cards):
     if len(cards) != 1: return False
     else: return True
+

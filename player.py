@@ -93,6 +93,7 @@ class Player(Widget):
                     if not check_same_player_again: check_meld_turn += 1
                     check_same_player_again = False
                 
+        if self.parent.check_for_game_over(player_number): return
         self.parent.end_turn(player_number)
         self.parent.refresh_cards(player_number)
 

@@ -10,6 +10,7 @@ from kivy.clock import Clock
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.lang import Builder
+from kivy.uix.button import Button
 
 from rotated_cards import RotatedCards
 from touch import Touch
@@ -31,6 +32,11 @@ class PopUpWindow(FloatLayout):
         super(PopUpWindow, self).__init__(**kwargs)
         self.game_over_message = game_over_message
         print(self.game_over_message)
+    
+    def close_popup(self):
+        # self.get_parent_window().dismiss()
+        print(self.get_parent_window())
+        
 
 
 class GameWindow(Screen):
@@ -72,14 +78,14 @@ class GameWindow(Screen):
         for player in self.players:
             self.add_widget(player)
 
-            if count == 0:
-                player.player_cards = [7]
-                for card in player.player_cards:
-                    self.card_deck.remove(card)
-                count+=1
-                continue
+            # if count == 0:
+            #     player.player_cards = [27,28,29,30,44]
+            #     for card in player.player_cards:
+            #         self.card_deck.remove(card)
+            #     count+=1
+            #     continue
             # if count == 1:
-            #     player.player_cards = [5,6,8,9]
+            #     player.player_cards = [7]
             #     for card in player.player_cards:
             #         self.card_deck.remove(card)
             #     count+=1
@@ -114,6 +120,7 @@ class GameWindow(Screen):
         self.turn = 0
         self.check_for_thank_yous_count = 1
         self.game_over = False
+        self.took_first_card = False
         print('-------------------------------------------', 'Starting Turn number', '0', '-------------------------------------------')
 
     def verify_meld(self):
@@ -159,6 +166,9 @@ class GameWindow(Screen):
                     break
 
                 check_meld_turn += 1
+
+        if self.check_for_game_over(0): return
+        
             
     def end_turn(self, turn_num):
 
@@ -167,7 +177,7 @@ class GameWindow(Screen):
             self.players[turn_num].remove_card(card)
             self.trash_pile_card.source = cardnum_to_card_image_path(card)
             self.trash_pile_card_num = card
-            self.check_for_game_over(turn_num)
+            if self.check_for_game_over(turn_num): return 
             print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
             self.check_for_thank_yous_count = 1
             self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
@@ -180,7 +190,7 @@ class GameWindow(Screen):
         self.players[0].remove_card(card_num)
         self.trash_pile_card.source = cardnum_to_card_image_path(card_num)
         self.trash_pile_card_num = card_num
-        self.check_for_game_over(turn_num)
+        if self.check_for_game_over(turn_num): return
         self.refresh_cards(0)
         self.buttons_visible = False
         self.took_first_card = False
@@ -280,21 +290,36 @@ class GameWindow(Screen):
         self.deciding_thank_you = False
         self.buttons_visible = False 
       
+    def exit_pop(self, *kwargs):
+        # self.root.current = 'Title Window'
+        print('Exiting Pop Up')
+        self.parent.current = 'Title Window'
+        self.clear_widgets()
+        self.__init__()
+
     def check_for_game_over(self, turn_num):
 
         if len(self.players[turn_num].player_cards) == 0:
             print('Game over. Player', turn_num, 'won!')
             game_over_message = f'Game over. Player {str(turn_num)} won!'
+
             pop_up = PopUpWindow(game_over_message)
+            button_to_close = Button(text='Return to title page.', size_hint=(0.8, 0.2), pos_hint={'x':0.1, 'y':0.1})
+            pop_up.add_widget(button_to_close)
             pop_up_window = Popup(title='Game Over', content=pop_up, size_hint=(0.5,0.5))
+            button_to_close.bind(on_press=pop_up_window.dismiss)
+            button_to_close.bind(on_press=self.exit_pop)
+
             pop_up_window.open()
             return True
         else: return False
 
+    
 class HoolaApp(App):
     
     def build(self):
-        return Builder.load_file('hoola.kv')
+        kv = Builder.load_file('hoola.kv')
+        return kv
 
 if __name__ == '__main__':
     HoolaApp().run()
