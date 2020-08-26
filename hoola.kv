@@ -2,22 +2,57 @@
 WindowManager:
     TitleWindow:
     GameWindow:
+    RulesWindow:
+
+<RulesWindow>:
+    name: 'Rules Window'
+    FloatLayout:
+
+        Label:
+            text: root.rules
+            size_hint_x: 0.8
+            pos_hint: {'x':0.1}
+        
+        ImageButton:
+            source: './cards/arrow.png'
+            text: 'Back'
+            size_hint: 0.25, 0.1
+            pos_hint: {'x':-0.08, 'y': 0.88}
+            on_release:
+                app.root.current = 'Title Window'
+                root.manager.transition.direction = 'right'
+
 
 <TitleWindow>:
     name: 'Title Window'
     FloatLayout:
 
         Label:
-            text: 'Title Window'
+            text: '[size=60][b]HOOLA[/b][/size]'
+            markup: True
+            size_hint: 0.3, 0.3
+            pos_hint: {'x':0.15, 'y':0.6}
+
+        Image:
+            source: './cards/h7.png'
+            size_hint_y: 0.5 
+            pos_hint: {'x':-0.20, 'y':0.1}
 
         Button:
-            text: 'Play now!'
-            size_hint: 0.6, 0.2
-            pos_hint: {'x':0.2}
+            text: 'Start Game'
+            size_hint: 0.3, 0.2
+            pos_hint: {'x':0.6, 'y': 0.55}
             on_release:
                 app.root.current = 'Game Window'
                 root.manager.transition.direction = 'left'
 
+        Button:
+            text: 'How To Play'
+            size_hint: 0.3, 0.2
+            pos_hint: {'x':0.6, 'y': 0.25}
+            on_release:
+                app.root.current = 'Rules Window'
+                root.manager.transition.direction = 'left'
 
 <GameWindow>:
     name: 'Game Window'

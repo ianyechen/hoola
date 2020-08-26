@@ -11,18 +11,33 @@ from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.lang import Builder
 from kivy.uix.button import Button
+from kivy.uix.behaviors import ButtonBehavior
+
 
 from rotated_cards import RotatedCards
 from touch import Touch
 from player import Player
 from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
 from functools import partial
+from rules import rules_string
+
+class ImageButton(ButtonBehavior, Image):
+    pass
 
 class WindowManager(ScreenManager):
     pass
 
 class TitleWindow(Screen):
     pass
+
+
+class RulesWindow(Screen):
+    rules = StringProperty('')
+
+    def __init__(self, **kwargs):
+        super(RulesWindow, self).__init__(**kwargs)
+        self.rules = rules_string
+        # self.add_widget(ImageButton(source='./cards/c1.png'))
 
 class PopUpWindow(FloatLayout):
 
@@ -121,6 +136,7 @@ class GameWindow(Screen):
         self.check_for_thank_yous_count = 1
         self.game_over = False
         self.took_first_card = False
+        self.buttons_visible = True
         print('-------------------------------------------', 'Starting Turn number', '0', '-------------------------------------------')
 
     def verify_meld(self):
@@ -171,6 +187,7 @@ class GameWindow(Screen):
         
             
     def end_turn(self, turn_num):
+        if self.game_over: return
 
         if turn_num != 0:
             card = self.players[turn_num].player_cards[0]
@@ -311,6 +328,8 @@ class GameWindow(Screen):
             button_to_close.bind(on_press=self.exit_pop)
 
             pop_up_window.open()
+            self.game_over = True
+
             return True
         else: return False
 
