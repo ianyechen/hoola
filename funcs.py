@@ -41,8 +41,10 @@ def cardstr_to_cardnum(card):
 # return: bool result 
 def is_meld_valid(cards):
 
+    if not cards: return 
+    
     # if only one card, only a 7 is valid
-    if len(cards) == 1:
+    elif len(cards) == 1:
         if cards[0][1] == '7': return True
         else: return False
 

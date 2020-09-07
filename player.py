@@ -58,6 +58,8 @@ class Player(Widget):
 
     def player_turn(self, player_number):
         
+        game_log_string = "Player " + str(player_number) + "'s turn\n"
+        self.parent.game_log.game_log += game_log_string
         print('-------------------------------------------', 'Starting Turn number', player_number, '-------------------------------------------')
         self.parent.draw_card(self)
 
@@ -78,6 +80,8 @@ class Player(Widget):
                         valid, melded_cards_index = is_add_valid(cards_currently_selected, self.parent.players[check_meld_turn].player_melded_cards) 
 
                         if (valid): 
+                            game_log_string = "Player " + str(player_number) + " added " + str(card) + " to Player " + str(check_meld_turn) + "\n"
+                            self.parent.game_log.game_log += game_log_string
                             print('Player' , player_number, 'added', card, 'to Player', check_meld_turn)
                             for card in cards_currently_selected:             
                                 card_num = cardstr_to_cardnum(card)
@@ -181,6 +185,8 @@ class Player(Widget):
                                 self.player_cards.remove(num)        
                             list_to_add.sort()
                             self.player_melded_cards.append(list_to_add)
+                            game_log_string = "Player " + str(player_number) + " melded " + str(list_to_add) + "\n"
+                            self.parent.game_log.game_log += game_log_string
                             print('Player', player_number, 'melded', list_to_add)
 
                             consecutive_cards.clear()
@@ -206,6 +212,8 @@ class Player(Widget):
                                         self.player_cards.remove(num)         
                                     list_to_add.sort()
                                     self.player_melded_cards.append(list_to_add)
+                                    game_log_string = "Player " + str(player_number) + " melded " + str(list_to_add) + "\n"
+                                    self.parent.game_log.game_log += game_log_string
                                     print('Player', player_number, 'melded', list_to_add)
 
                                     melded_consecutive_cards = True
@@ -236,6 +244,8 @@ class Player(Widget):
                 num_to_index['7'][i] = self.player_cards[num_to_index['7'][i]]
                 meld_combo_with_single_seven = [num_to_index['7'][i]]
                 self.player_melded_cards.append(meld_combo_with_single_seven)
+                game_log_string = "Player " + str(player_number) + " melded " + str(meld_combo_with_single_seven) + "\n"
+                self.parent.game_log.game_log += game_log_string
                 print('Player', player_number, 'melded', meld_combo_with_single_seven)
 
             for i in range(len(num_to_index['7'])):
@@ -264,6 +274,8 @@ class Player(Widget):
                         value[i] = self.player_cards[value[i]]
                 
                     self.player_melded_cards.append(value)
+                    game_log_string = "Player " + str(player_number) + " melded " + str(value) + "\n"
+                    self.parent.game_log.game_log += game_log_string
                     print('Player', player_number, 'melded', value)
 
                     for i in range(len(value)):
@@ -315,6 +327,8 @@ class Player(Widget):
         if self.decide_can_meld(turn_num, True):
 
             self.parent.turn = turn_num
+            game_log_string = "Player " + str(turn_num) + " said thank you to " + str(self.parent.trash_pile_card_num) + "\n"
+            self.parent.game_log.game_log += game_log_string
             print('Player', turn_num , 'can say thank you to', self.parent.trash_pile_card_num)
             self.decide_can_meld(turn_num, False)
 
@@ -329,6 +343,8 @@ class Player(Widget):
                         valid, melded_cards_index = is_add_valid(cards_currently_selected, self.parent.players[check_meld_turn].player_melded_cards)
 
                         if (valid): 
+                            game_log_string = "Player " + str(turn_num) + " added " + str(card) + " to Player " + str(check_meld_turn) + "\n"
+                            self.parent.game_log.game_log += game_log_string
                             print('Player', turn_num, 'added', card, 'to Player', check_meld_turn)
                             for card in cards_currently_selected:             
                                 card_num = cardstr_to_cardnum(card)

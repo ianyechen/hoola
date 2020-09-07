@@ -12,7 +12,7 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.behaviors import ButtonBehavior
-
+from kivy.uix.scrollview import ScrollView
 
 from rotated_cards import RotatedCards
 from touch import Touch
@@ -37,7 +37,6 @@ class RulesWindow(Screen):
     def __init__(self, **kwargs):
         super(RulesWindow, self).__init__(**kwargs)
         self.rules = rules_string
-        # self.add_widget(ImageButton(source='./cards/c1.png'))
 
 class PopUpWindow(FloatLayout):
 
@@ -49,9 +48,31 @@ class PopUpWindow(FloatLayout):
         print(self.game_over_message)
     
     def close_popup(self):
-        # self.get_parent_window().dismiss()
         print(self.get_parent_window())
-        
+
+Builder.load_string('''
+<ScrolllabelLabel>:
+
+    # pos_hint: {'x':0.05,'y':-0.8}
+    size_hint: (0.25, 0.3)
+    Label:
+        text: root.game_log
+        font_size: 18
+        text_size: self.width, None
+        size_hint_y: None
+        height: self.texture_size[1]
+
+''')
+
+class ScrolllabelLabel(ScrollView):
+    game_log = StringProperty('')
+
+    def __init__(self, **kwargs):
+        super(ScrolllabelLabel, self).__init__(**kwargs)
+
+
+    # def on_scroll_start(self, scroll):
+    #     print(scroll)
 
 
 class GameWindow(Screen):
@@ -114,6 +135,8 @@ class GameWindow(Screen):
             count+=1
 
         self.add_widget(Touch())
+        self.game_log = ScrolllabelLabel()
+        self.add_widget(self.game_log)
         self.display_cards()
         self.number_of_cards_left = len(self.card_deck)
         self.start_game()
@@ -137,11 +160,15 @@ class GameWindow(Screen):
         self.game_over = False
         self.took_first_card = False
         self.buttons_visible = True
+        self.game_log.game_log += "Player 0's turn\n"
         print('-------------------------------------------', 'Starting Turn number', '0', '-------------------------------------------')
 
     def verify_meld(self):
 
         if is_meld_valid(self.cards_currently_selected):
+            game_log_string = "Player 0 melded " + str(self.cards_currently_selected) + "\n"
+            self.game_log.game_log += game_log_string
+
             print('Player 0 melded', self.cards_currently_selected)
             
             for count, card in enumerate(self.cards_currently_selected):
@@ -167,7 +194,8 @@ class GameWindow(Screen):
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
                 
                 if (valid): 
-
+                    game_log_string = "Player 0 added " + str(self.cards_currently_selected) + "to Player " + str(check_meld_turn) + "\n"
+                    self.game_log.game_log += game_log_string
                     print('Player 0 added', self.cards_currently_selected, 'to Player', check_meld_turn)
                     for card in self.cards_currently_selected:             
                         card_num = cardstr_to_cardnum(card)
@@ -290,7 +318,8 @@ class GameWindow(Screen):
             print('Can not say thank you since there are no possible combos')
             self.players[0].remove_card(self.trash_pile_card_num)
             return 
-
+        game_log_string = "Player 0 said thank you to " + str(self.trash_pile_card_num) + "\n"
+        self.game_log.game_log += game_log_string
         print('Player 0 can say thank you to', self.trash_pile_card_num)
 
         self.response_for_thank_you = True
@@ -323,7 +352,7 @@ class GameWindow(Screen):
             pop_up = PopUpWindow(game_over_message)
             button_to_close = Button(text='Return to title page.', size_hint=(0.8, 0.2), pos_hint={'x':0.1, 'y':0.1})
             pop_up.add_widget(button_to_close)
-            pop_up_window = Popup(title='Game Over', content=pop_up, size_hint=(0.5,0.5))
+            pop_up_window = Popup(title='Game Over', auto_dismiss=False, content=pop_up, size_hint=(0.5,0.5))
             button_to_close.bind(on_press=pop_up_window.dismiss)
             button_to_close.bind(on_press=self.exit_pop)
 
