@@ -1,7 +1,7 @@
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 
-from funcs import cardnum_to_card_image_path, cardnum_to_cardstr, cardstr_to_cardnum, is_add_valid
+from funcs import cardnum_to_card_image_path, cardnum_to_cardstr, cardstr_to_cardnum, is_add_valid, cardnum_dict_to_cardstr_dict
 from rotated_cards import RotatedCards
 
 class Player(Widget):
@@ -80,7 +80,7 @@ class Player(Widget):
                         valid, melded_cards_index = is_add_valid(cards_currently_selected, self.parent.players[check_meld_turn].player_melded_cards) 
 
                         if (valid): 
-                            game_log_string = "Player " + str(player_number) + " added " + str(card) + " to Player " + str(check_meld_turn) + "\n"
+                            game_log_string = "Player " + str(player_number) + " added " + str(cardnum_to_cardstr(card)) + " to Player " + str(check_meld_turn) + "\n"
                             self.parent.game_log.game_log += game_log_string
                             print('Player' , player_number, 'added', card, 'to Player', check_meld_turn)
                             for card in cards_currently_selected:             
@@ -97,7 +97,7 @@ class Player(Widget):
                     if not check_same_player_again: check_meld_turn += 1
                     check_same_player_again = False
                 
-        if self.parent.check_for_game_over(player_number): return
+        if self.parent.check_for_game_over(player_number, False): return
         self.parent.end_turn(player_number)
         self.parent.refresh_cards(player_number)
 
@@ -179,14 +179,16 @@ class Player(Widget):
                                 if num == self.parent.trash_pile_card_num: can_say_thank_you = True
                             
                         else:
+                            copy_of_list_to_add = list(list_to_add)
+                            game_log_string = "Player " + str(player_number) + " melded " + str(cardnum_dict_to_cardstr_dict(copy_of_list_to_add)) + "\n"
+                            self.parent.game_log.game_log += game_log_string
                             for count, card in enumerate(list_to_add):
                                 num = cardstr_to_cardnum(suit_str+str(card))
                                 list_to_add[count] = num
                                 self.player_cards.remove(num)        
                             list_to_add.sort()
                             self.player_melded_cards.append(list_to_add)
-                            game_log_string = "Player " + str(player_number) + " melded " + str(list_to_add) + "\n"
-                            self.parent.game_log.game_log += game_log_string
+                            
                             print('Player', player_number, 'melded', list_to_add)
 
                             consecutive_cards.clear()
@@ -206,14 +208,15 @@ class Player(Widget):
                                         if num == self.parent.trash_pile_card_num: can_say_thank_you = True
 
                                 else:
+                                    game_log_string = "Player " + str(player_number) + " melded " + str(list_to_add) + "\n"
+                                    self.parent.game_log.game_log += game_log_string
                                     for count, card in enumerate(list_to_add):
                                         num = cardstr_to_cardnum(suit_str+str(card))
                                         list_to_add[count] = num
                                         self.player_cards.remove(num)         
                                     list_to_add.sort()
                                     self.player_melded_cards.append(list_to_add)
-                                    game_log_string = "Player " + str(player_number) + " melded " + str(list_to_add) + "\n"
-                                    self.parent.game_log.game_log += game_log_string
+                                    
                                     print('Player', player_number, 'melded', list_to_add)
 
                                     melded_consecutive_cards = True
@@ -244,7 +247,8 @@ class Player(Widget):
                 num_to_index['7'][i] = self.player_cards[num_to_index['7'][i]]
                 meld_combo_with_single_seven = [num_to_index['7'][i]]
                 self.player_melded_cards.append(meld_combo_with_single_seven)
-                game_log_string = "Player " + str(player_number) + " melded " + str(meld_combo_with_single_seven) + "\n"
+                copy_of_meld_combo_with_single_seven = list(meld_combo_with_single_seven)
+                game_log_string = "Player " + str(player_number) + " melded " + str(cardnum_dict_to_cardstr_dict(copy_of_meld_combo_with_single_seven)) + "\n"
                 self.parent.game_log.game_log += game_log_string
                 print('Player', player_number, 'melded', meld_combo_with_single_seven)
 
@@ -274,7 +278,8 @@ class Player(Widget):
                         value[i] = self.player_cards[value[i]]
                 
                     self.player_melded_cards.append(value)
-                    game_log_string = "Player " + str(player_number) + " melded " + str(value) + "\n"
+                    copy_of_value = list(value)
+                    game_log_string = "Player " + str(player_number) + " melded " + str(cardnum_dict_to_cardstr_dict(copy_of_value)) + "\n"
                     self.parent.game_log.game_log += game_log_string
                     print('Player', player_number, 'melded', value)
 
@@ -305,10 +310,10 @@ class Player(Widget):
                     pos_hint = {'x':-0.2 + increment_x*0.03, 'y': 0.75}
 
                 elif player_number == 2: 
-                    pos_hint = {'x':-0.4 + increment_x*0.03, 'y': 0.5 - increment_y*0.15}
+                    pos_hint = {'x':-0.4 + increment_x*0.03, 'y': 0.65 - increment_y*0.15}
         
                 elif player_number == 3:
-                    pos_hint = {'x':0.3 + increment_x*0.03, 'y': 0.5 - increment_y*0.15}
+                    pos_hint = {'x':0.3 + increment_x*0.03, 'y': 0.65 - increment_y*0.15}
 
                 wid = Image(source=img_src, size_hint_y=0.15, pos_hint=pos_hint)
                 self.parent.add_widget(wid)
@@ -327,7 +332,7 @@ class Player(Widget):
         if self.decide_can_meld(turn_num, True):
 
             self.parent.turn = turn_num
-            game_log_string = "Player " + str(turn_num) + " said thank you to " + str(self.parent.trash_pile_card_num) + "\n"
+            game_log_string = "Player " + str(turn_num) + " said thank you to " + str(cardnum_to_cardstr(self.parent.trash_pile_card_num)) + "\n"
             self.parent.game_log.game_log += game_log_string
             print('Player', turn_num , 'can say thank you to', self.parent.trash_pile_card_num)
             self.decide_can_meld(turn_num, False)
@@ -343,7 +348,7 @@ class Player(Widget):
                         valid, melded_cards_index = is_add_valid(cards_currently_selected, self.parent.players[check_meld_turn].player_melded_cards)
 
                         if (valid): 
-                            game_log_string = "Player " + str(turn_num) + " added " + str(card) + " to Player " + str(check_meld_turn) + "\n"
+                            game_log_string = "Player " + str(turn_num) + " added " + str(cardnum_to_cardstr(card)) + " to Player " + str(check_meld_turn) + "\n"
                             self.parent.game_log.game_log += game_log_string
                             print('Player', turn_num, 'added', card, 'to Player', check_meld_turn)
                             for card in cards_currently_selected:             

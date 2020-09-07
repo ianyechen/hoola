@@ -1,5 +1,6 @@
 import kivy
 import random 
+import sys
 
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
@@ -17,7 +18,7 @@ from kivy.uix.scrollview import ScrollView
 from rotated_cards import RotatedCards
 from touch import Touch
 from player import Player
-from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid
+from funcs import cardnum_to_card_image_path, cardstr_to_cardnum, is_meld_valid, is_add_valid, is_end_turn_valid, cardnum_to_cardstr
 from functools import partial
 from rules import rules_string
 
@@ -194,7 +195,7 @@ class GameWindow(Screen):
                 valid, melded_cards_index = is_add_valid(self.cards_currently_selected, self.players[check_meld_turn].player_melded_cards) 
                 
                 if (valid): 
-                    game_log_string = "Player 0 added " + str(self.cards_currently_selected) + "to Player " + str(check_meld_turn) + "\n"
+                    game_log_string = "Player 0 added " + self.cards_currently_selected[0] + " to Player " + str(check_meld_turn) + "\n"
                     self.game_log.game_log += game_log_string
                     print('Player 0 added', self.cards_currently_selected, 'to Player', check_meld_turn)
                     for card in self.cards_currently_selected:             
@@ -211,10 +212,13 @@ class GameWindow(Screen):
 
                 check_meld_turn += 1
 
-        if self.check_for_game_over(0): return
+        if self.check_for_game_over(0, False): return
         
             
     def end_turn(self, turn_num):
+        
+        if len(self.card_deck) == 0: self.card_deck_empty()
+
         if self.game_over: return
 
         if turn_num != 0:
@@ -222,7 +226,9 @@ class GameWindow(Screen):
             self.players[turn_num].remove_card(card)
             self.trash_pile_card.source = cardnum_to_card_image_path(card)
             self.trash_pile_card_num = card
-            if self.check_for_game_over(turn_num): return 
+            if self.check_for_game_over(turn_num, False): return 
+            game_log_string = "Player " + str(turn_num) + " threw away " + str(cardnum_to_cardstr(card)) + "\n"
+            self.game_log.game_log += game_log_string
             print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
             self.check_for_thank_yous_count = 1
             self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
@@ -235,10 +241,12 @@ class GameWindow(Screen):
         self.players[0].remove_card(card_num)
         self.trash_pile_card.source = cardnum_to_card_image_path(card_num)
         self.trash_pile_card_num = card_num
-        if self.check_for_game_over(turn_num): return
+        if self.check_for_game_over(turn_num, False): return
         self.refresh_cards(0)
         self.buttons_visible = False
         self.took_first_card = False
+        game_log_string = "Player 0 threw away " + str(cardnum_to_cardstr(card_num)) + "\n"
+        self.game_log.game_log += game_log_string
         print('-------------------------------------------', 'Ending Turn number', turn_num, '-------------------------------------------')
         self.check_for_thank_yous_count = 1
         self.event_for_clock_scheduling = Clock.schedule_interval(partial(self.check_for_thank_yous, (turn_num + self.check_for_thank_yous_count) % 4, turn_num), 0.1) 
@@ -318,7 +326,7 @@ class GameWindow(Screen):
             print('Can not say thank you since there are no possible combos')
             self.players[0].remove_card(self.trash_pile_card_num)
             return 
-        game_log_string = "Player 0 said thank you to " + str(self.trash_pile_card_num) + "\n"
+        game_log_string = "Player 0 said thank you to " + str(cardnum_to_cardstr(self.trash_pile_card_num)) + "\n"
         self.game_log.game_log += game_log_string
         print('Player 0 can say thank you to', self.trash_pile_card_num)
 
@@ -343,9 +351,9 @@ class GameWindow(Screen):
         self.clear_widgets()
         self.__init__()
 
-    def check_for_game_over(self, turn_num):
+    def check_for_game_over(self, turn_num, no_more_cards):
 
-        if len(self.players[turn_num].player_cards) == 0:
+        if len(self.players[turn_num].player_cards) == 0 or no_more_cards:
             print('Game over. Player', turn_num, 'won!')
             game_over_message = f'Game over. Player {str(turn_num)} won!'
 
@@ -361,6 +369,30 @@ class GameWindow(Screen):
 
             return True
         else: return False
+
+    def card_deck_empty(self):
+
+        final_scores = []
+        for player in self.players:
+            scores_for_player = 0
+            for card in player.player_cards:
+                scores_for_player += (card % 13)
+            
+            final_scores.append(scores_for_player)
+        
+        winner = -1
+        min_score = sys.maxsize
+        for index, score in enumerate(final_scores):
+            if (score < min_score):
+                min_score = score
+                winner = index 
+
+        self.check_for_game_over(winner, True)
+
+
+
+            
+
 
     
 class HoolaApp(App):

@@ -35,14 +35,20 @@ def cardstr_to_cardnum(card):
     else: multiply = 3
 
     return int((multiply * 13)) + int(card[1:])
-     
+    
+def cardnum_dict_to_cardstr_dict(card_dict):
+    for count, card in enumerate(card_dict):
+        card_dict[count] = cardnum_to_cardstr(card)
+
+    return card_dict
+
 # checking to see if a meld is valid or not 
 # params: list cards 
 # return: bool result 
 def is_meld_valid(cards):
 
     if not cards: return 
-    
+
     # if only one card, only a 7 is valid
     elif len(cards) == 1:
         if cards[0][1] == '7': return True
